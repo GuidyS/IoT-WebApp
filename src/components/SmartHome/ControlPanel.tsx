@@ -13,7 +13,10 @@ import {
   Plus,
   SunDim,
   CloudRain,
-  UserCheck
+  UserCheck,
+  AlertTriangle,
+  Droplets,
+  Fan
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +35,9 @@ const deviceIcon = {
   fan: Wind,
   curtain: ArrowUpDown,
   rack: SunDim,
+  hood: Fan,
+  detector: AlertTriangle,
+  pump: Droplets,
 };
 
 export function ControlPanel({ room, onUpdateDevice, curtainIp, doorIp }: Props) {
@@ -88,6 +94,7 @@ function DeviceCard({
   const stateLabel = (() => {
     if (device.type === "lock") return device.state ? "ล็อคอยู่" : "ปลดล็อค";
     if (device.type === "rack") return device.state ? "กางอยู่" : "พับเก็บ";
+    if (device.type === "detector") return device.state ? "เปิดการตรวจจับ" : "ปิดการตรวจจับ";
     return device.state ? "เปิด" : "ปิด";
   })();
 

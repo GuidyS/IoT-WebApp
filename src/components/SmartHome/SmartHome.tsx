@@ -13,53 +13,64 @@ import { toast } from "sonner";
 
 const initialRooms: Room[] = [
   {
-    id: "living",
-    name: "ห้องนั่งเล่น",
-    nameEn: "Living Room",
-    x: 4, y: 4, width: 52, height: 32,
-    devices: [
-      { id: "living-light", type: "light", name: "ไฟเพดาน", state: true, powerConsumption: 60 },
-      { id: "living-curtain", type: "curtain", name: "ม่านอัตโนมัติ", state: false, powerConsumption: 10 },
-    ],
-  },
-  {
-    id: "kitchen",
-    name: "ห้องครัว",
-    nameEn: "Kitchen",
-    x: 56, y: 4, width: 40, height: 22,
-    devices: [
-      { id: "kitchen-light", type: "light", name: "ไฟครัว", state: false, powerConsumption: 40 },
-      { id: "kitchen-fan", type: "fan", name: "พัดลมดูดอากาศ", state: false, powerConsumption: 75 },
-    ],
-  },
-  {
     id: "bedroom",
     name: "ห้องนอน",
     nameEn: "Bedroom",
-    x: 4, y: 36, width: 36, height: 30,
+    x: 20, y: 5, width: 28, height: 30,
     devices: [
-      { id: "bedroom-light", type: "light", name: "ไฟหัวเตียง", state: false, powerConsumption: 30 },
-      { id: "bedroom-rack", type: "rack", name: "ราวตากผ้า", state: false, powerConsumption: 50 },
-      { id: "bedroom-lock", type: "lock", name: "ประตูห้องนอน", state: true, powerConsumption: 0 },
+      { id: "bedroom-curtain", type: "curtain", name: "ผ้าม่าน", state: false, powerConsumption: 10 },
+      { id: "bedroom-light", type: "light", name: "ไฟห้องนอน", state: false, powerConsumption: 30 },
     ],
   },
   {
     id: "bathroom",
     name: "ห้องน้ำ",
     nameEn: "Bathroom",
-    x: 40, y: 36, width: 16, height: 18,
+    x: 48, y: 5, width: 22, height: 30,
     devices: [
+      { id: "bath-fan", type: "fan", name: "พัดลมดูดอากาศ", state: false, powerConsumption: 40 },
       { id: "bath-light", type: "light", name: "ไฟห้องน้ำ", state: false, powerConsumption: 20 },
     ],
   },
   {
-    id: "garage",
-    name: "โรงรถ",
-    nameEn: "Garage",
-    x: 56, y: 26, width: 40, height: 40,
+    id: "kitchen",
+    name: "ห้องครัว",
+    nameEn: "Kitchen",
+    x: 70, y: 5, width: 25, height: 30,
     devices: [
-      { id: "garage-light", type: "light", name: "ไฟโรงรถ", state: false, powerConsumption: 100 },
-      { id: "garage-lock", type: "lock", name: "ประตูโรงรถ", state: true, powerConsumption: 0 },
+      { id: "kitchen-hood", type: "hood", name: "ที่ดูดควัน", state: false, powerConsumption: 150 },
+      { id: "kitchen-detector", type: "detector", name: "ที่ตรวจวัดควัน", state: true, powerConsumption: 5 },
+      { id: "kitchen-pump", type: "pump", name: "ปั๊มน้ำ", state: false, powerConsumption: 400 },
+      { id: "kitchen-light", type: "light", name: "ไฟครัว", state: false, powerConsumption: 40 },
+    ],
+  },
+  {
+    id: "garage",
+    name: "โรงจอดรถ",
+    nameEn: "Garage",
+    x: 20, y: 35, width: 28, height: 30,
+    devices: [
+      { id: "garage-lock", type: "lock", name: "ประตูโรงจอดรถ", state: true, powerConsumption: 0 },
+      { id: "garage-light", type: "light", name: "ไฟโรงรถ", state: false, powerConsumption: 60 },
+    ],
+  },
+  {
+    id: "living",
+    name: "ห้องนั่งเล่น",
+    nameEn: "Living Room",
+    x: 48, y: 35, width: 47, height: 30,
+    devices: [
+      { id: "living-lock", type: "lock", name: "ประตูเข้าบ้าน", state: true, powerConsumption: 0 },
+      { id: "living-light", type: "light", name: "ไฟนั่งเล่น", state: false, powerConsumption: 60 },
+    ],
+  },
+  {
+    id: "outside",
+    name: "นอกบ้าน",
+    nameEn: "Outside",
+    x: 4, y: 5, width: 14, height: 15,
+    devices: [
+      { id: "bedroom-rack", type: "rack", name: "ราวตากผ้า", state: false, powerConsumption: 50 },
     ],
   },
 ];
@@ -120,7 +131,7 @@ export function SmartHome() {
     const next = { ...device, ...updates };
 
     // --- Local ESP32 Integration ---
-    if (deviceId === "living-curtain" && updates.state !== undefined) {
+    if (deviceId === "bedroom-curtain" && updates.state !== undefined) {
       fetch(`http://${curtainIp}${updates.state ? "/stepper/open" : "/stepper/close"}`)
         .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
         .catch(e => {
@@ -136,7 +147,7 @@ export function SmartHome() {
           toast.error(`ส่งคำสั่งราวตากผ้าไม่สำเร็จ (IP: ${rackIp}) - โปรดเช็ควง LAN หรือ IP`);
         });
     }
-    if ((deviceId === "bedroom-lock" || deviceId === "garage-lock") && updates.state !== undefined) {
+    if ((deviceId === "living-lock" || deviceId === "garage-lock") && updates.state !== undefined) {
       fetch(`http://${doorIp}${updates.state ? "/close" : "/open"}`)
         .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
         .catch(e => {
