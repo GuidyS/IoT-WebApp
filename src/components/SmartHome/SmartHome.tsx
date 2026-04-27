@@ -230,7 +230,6 @@ export function SmartHome() {
         </Button>
       </div>
 
-<<<<<<< HEAD
       {/* Tab Navigation */}
       <div className="relative flex items-center gap-1 rounded-2xl border border-border bg-card/60 p-1.5 shadow-[var(--shadow-card)] backdrop-blur-sm">
         {/* Animated sliding indicator */}
@@ -258,11 +257,6 @@ export function SmartHome() {
             <span className="hidden text-xs opacity-70 sm:inline">· {tab.labelEn}</span>
           </button>
         ))}
-=======
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <FloorPlan rooms={localRooms} selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} />
-        <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} curtainIp={curtainIp} />
->>>>>>> d1cae33 (Connect ESP)
       </div>
 
       {/* Tab Content */}
@@ -273,7 +267,7 @@ export function SmartHome() {
         {activeTab === "floorplan" && (
           <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             <FloorPlan rooms={localRooms} selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} />
-            <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} />
+            <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} curtainIp={curtainIp} doorIp={doorIp} />
           </div>
         )}
 
