@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import type { Room, Device } from "./types";
 import { FloorPlan } from "./FloorPlan";
 import { ControlPanel } from "./ControlPanel";
-import { ElectricityCalculator } from "./ElectricityCalculator";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDeviceStates, setDeviceState } from "@/lib/devices.functions";
 import { seedDeviceStates } from "@/lib/test.functions";
-import { Loader2, Wifi, WifiOff, Sprout, LayoutGrid, Zap } from "lucide-react";
+import { Loader2, Wifi, WifiOff, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDeviceSettings } from "@/hooks/useDeviceSettings";
 import { DeviceSettingsDialog } from "./DeviceSettingsDialog";
+import { toast } from "sonner";
 
 const initialRooms: Room[] = [
   {
@@ -18,14 +18,8 @@ const initialRooms: Room[] = [
     nameEn: "Living Room",
     x: 4, y: 4, width: 52, height: 32,
     devices: [
-<<<<<<< HEAD
       { id: "living-light", type: "light", name: "ไฟเพดาน", state: true, powerConsumption: 60 },
-      { id: "living-ac", type: "ac", name: "แอร์", state: true, temperature: 24, powerConsumption: 1000 },
       { id: "living-curtain", type: "curtain", name: "ม่านอัตโนมัติ", state: false, powerConsumption: 10 },
-=======
-      { id: "living-light", type: "light", name: "ไฟเพดาน", state: true },
-      { id: "living-curtain", type: "curtain", name: "ม่านอัตโนมัติ", state: false },
->>>>>>> d1cae33 (Connect ESP)
     ],
   },
   {
@@ -44,15 +38,9 @@ const initialRooms: Room[] = [
     nameEn: "Bedroom",
     x: 4, y: 36, width: 36, height: 30,
     devices: [
-<<<<<<< HEAD
       { id: "bedroom-light", type: "light", name: "ไฟหัวเตียง", state: false, powerConsumption: 30 },
-      { id: "bedroom-ac", type: "ac", name: "แอร์", state: false, temperature: 26, powerConsumption: 800 },
+      { id: "bedroom-rack", type: "rack", name: "ราวตากผ้า", state: false, powerConsumption: 50 },
       { id: "bedroom-lock", type: "lock", name: "ประตูห้องนอน", state: true, powerConsumption: 0 },
-=======
-      { id: "bedroom-light", type: "light", name: "ไฟหัวเตียง", state: false },
-      { id: "bedroom-rack", type: "rack", name: "ราวตากผ้า", state: false },
-      { id: "bedroom-lock", type: "lock", name: "ประตูห้องนอน", state: true },
->>>>>>> d1cae33 (Connect ESP)
     ],
   },
   {
@@ -92,13 +80,10 @@ function applyStates(rooms: Room[], states: Array<{ deviceId: string; state: boo
   }));
 }
 
-type TabId = "floorplan" | "electricity";
-
 export function SmartHome() {
   const qc = useQueryClient();
   const [selectedRoomId, setSelectedRoomId] = useState<string>("living");
   const [localRooms, setLocalRooms] = useState<Room[]>(initialRooms);
-  const [activeTab, setActiveTab] = useState<TabId>("floorplan");
 
   const { curtainIp, rackIp, doorIp, saveSettings } = useDeviceSettings();
 
@@ -152,7 +137,6 @@ export function SmartHome() {
         });
     }
     if ((deviceId === "bedroom-lock" || deviceId === "garage-lock") && updates.state !== undefined) {
-      // For lock: state true = locked (close), state false = unlocked (open)
       fetch(`http://${doorIp}${updates.state ? "/close" : "/open"}`)
         .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
         .catch(e => {
@@ -175,24 +159,8 @@ export function SmartHome() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["device-states"] }),
   });
 
-  const tabs: { id: TabId; label: string; labelEn: string; icon: React.ReactNode }[] = [
-    {
-      id: "floorplan",
-      label: "แผนผังบ้าน",
-      labelEn: "Floor Plan",
-      icon: <LayoutGrid className="h-4 w-4" />,
-    },
-    {
-      id: "electricity",
-      label: "ค่าไฟฟ้า",
-      labelEn: "Electricity",
-      icon: <Zap className="h-4 w-4" />,
-    },
-  ];
-
   return (
     <div className="space-y-4">
-      {/* Status bar */}
       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
         {isLoading ? (
           <>
@@ -226,62 +194,14 @@ export function SmartHome() {
             ? "กำลังเขียน…"
             : seedMut.data
               ? `เพิ่มแล้ว ${seedMut.data.count} แถว ✓`
-              : "🌱 Seed test data (เพิ่ม columns ใหม่)"}
+              : "🌱 Seed test data"}
         </Button>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="relative flex items-center gap-1 rounded-2xl border border-border bg-card/60 p-1.5 shadow-[var(--shadow-card)] backdrop-blur-sm">
-        {/* Animated sliding indicator */}
-        <div
-          className="absolute bottom-1.5 top-1.5 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-          style={{
-            background: "var(--gradient-primary)",
-            left: activeTab === "floorplan" ? "6px" : "calc(50% + 3px)",
-            width: "calc(50% - 9px)",
-            boxShadow: "0 4px 20px oklch(0.78 0.18 75 / 0.4)",
-          }}
-        />
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            id={`tab-${tab.id}`}
-            onClick={() => setActiveTab(tab.id)}
-            className="relative z-10 flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors duration-200"
-            style={{
-              color: activeTab === tab.id ? "var(--primary-foreground)" : "var(--muted-foreground)",
-            }}
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-            <span className="hidden text-xs opacity-70 sm:inline">· {tab.labelEn}</span>
-          </button>
-        ))}
+      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <FloorPlan rooms={localRooms} selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} />
+        <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} curtainIp={curtainIp} doorIp={doorIp} />
       </div>
-
-      {/* Tab Content */}
-      <div
-        className="transition-all duration-300"
-        style={{ animation: "fadeSlideIn 0.3s ease forwards" }}
-      >
-        {activeTab === "floorplan" && (
-          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-            <FloorPlan rooms={localRooms} selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} />
-            <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} curtainIp={curtainIp} doorIp={doorIp} />
-          </div>
-        )}
-
-        {activeTab === "electricity" && (
-          <ElectricityCalculator rooms={localRooms} />
-        )}
-      </div>
-
-      <style>{`
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateY(6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }
