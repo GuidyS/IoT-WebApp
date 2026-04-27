@@ -132,21 +132,28 @@ export function SmartHome() {
     if (!device) return;
     const next = { ...device, ...updates };
 
-    // --- Local ESP32 Integration ---
+    // ดึงค่า IP ล่าสุดเสมอ
+    const savedSettings = JSON.parse(localStorage.getItem("device-settings") || "{}");
+    const currentCurtainIp = savedSettings.curtainIp || curtainIp;
+    const currentRackIp = savedSettings.rackIp || rackIp;
+    const currentDoorIp = savedSettings.doorIp || doorIp;
+    const currentLightIp = savedSettings.lightIp || lightIp;
+
     if (deviceId === "bedroom-curtain" && updates.state !== undefined) {
-      fetch(`http://${curtainIp}${updates.state ? "/stepper/open" : "/stepper/close"}`)
+      fetch(`http://${currentCurtainIp}${updates.state ? "/stepper/open" : "/stepper/close"}`)
         .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
         .catch(e => {
           console.error("Curtain Error:", e);
-          toast.error(`ส่งคำสั่งม่านไม่สำเร็จ (IP: ${curtainIp}) - โปรดเช็ควง LAN หรือ IP`);
+          toast.error(`ส่งคำสั่งม่านไม่สำเร็จ (IP: ${currentCurtainIp})`);
         });
     }
     if (deviceId === "bedroom-rack" && updates.state !== undefined) {
-      fetch(`http://${rackIp}${updates.state ? "/servo/open" : "/servo/close"}`)
+      // ลองส่งไปที่ /servo/ หรือ /open/ ตามลำดับความน่าจะเป็น
+      fetch(`http://${currentRackIp}${updates.state ? "/servo/open" : "/servo/close"}`)
         .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
         .catch(e => {
           console.error("Rack Error:", e);
-          toast.error(`ส่งคำสั่งราวตากผ้าไม่สำเร็จ (IP: ${rackIp}) - โปรดเช็ควง LAN หรือ IP`);
+          toast.error(`ส่งคำสั่งราวตากผ้าไม่สำเร็จ (IP: ${currentRackIp})`);
         });
     }
 
@@ -162,24 +169,23 @@ export function SmartHome() {
     if (lightMapping[deviceId] && updates.state !== undefined) {
       const pin = lightMapping[deviceId];
       const state = updates.state ? 1 : 0;
-      const { lightIp } = JSON.parse(localStorage.getItem("device-settings") || "{}");
       
-      if (lightIp) {
-        fetch(`http://${lightIp}/set?pin=${pin}&state=${state}`)
+      if (currentLightIp) {
+        fetch(`http://${currentLightIp}/set?pin=${pin}&state=${state}`)
           .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
           .catch(e => {
             console.error("Light Error:", e);
-            toast.error(`ส่งคำสั่งไฟไม่สำเร็จ (IP: ${lightIp}) - โปรดเช็ควง LAN หรือ IP`);
+            toast.error(`ส่งคำสั่งไฟไม่สำเร็จ (IP: ${currentLightIp})`);
           });
       }
     }
     if ((deviceId === "living-lock" || deviceId === "garage-lock") && updates.state !== undefined) {
       // state: true = Open, state: false = Closed
-      fetch(`http://${doorIp}${updates.state ? "/open" : "/close"}`)
+      fetch(`http://${currentDoorIp}${updates.state ? "/open" : "/close"}`)
         .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
         .catch(e => {
           console.error("Door Error:", e);
-          toast.error(`ส่งคำสั่งประตูไม่สำเร็จ (IP: ${doorIp}) - โปรดตรวจสอบว่าใส่ CORS ในบอร์ดแล้ว`);
+          toast.error(`ส่งคำสั่งประตูไม่สำเร็จ (IP: ${currentDoorIp})`);
         });
     }
 
