@@ -11,11 +11,16 @@ import {
   ArrowUpDown,
   Minus,
   Plus,
+  SunDim,
+  CloudRain
 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface Props {
   room: Room;
   onUpdateDevice: (deviceId: string, updates: Partial<Device>) => void;
+  curtainIp?: string;
 }
 
 const deviceIcon = {
@@ -24,9 +29,10 @@ const deviceIcon = {
   lock: Lock,
   fan: Wind,
   curtain: ArrowUpDown,
+  rack: SunDim,
 };
 
-export function ControlPanel({ room, onUpdateDevice }: Props) {
+export function ControlPanel({ room, onUpdateDevice, curtainIp }: Props) {
   const activeCount = room.devices.filter((d) => {
     if (d.type === "lock") return !d.state; // unlocked = "active warning"
     return d.state;
@@ -49,7 +55,7 @@ export function ControlPanel({ room, onUpdateDevice }: Props) {
 
       <div className="space-y-3">
         {room.devices.map((device) => (
-          <DeviceCard key={device.id} device={device} onUpdate={onUpdateDevice} />
+          <DeviceCard key={device.id} device={device} onUpdate={onUpdateDevice} curtainIp={curtainIp} />
         ))}
       </div>
 
@@ -64,17 +70,34 @@ export function ControlPanel({ room, onUpdateDevice }: Props) {
 function DeviceCard({
   device,
   onUpdate,
+  curtainIp,
 }: {
   device: Device;
   onUpdate: (id: string, updates: Partial<Device>) => void;
+  curtainIp?: string;
 }) {
   const Icon = device.type === "lock" && !device.state ? LockOpen : deviceIcon[device.type];
   const isActive = device.type === "lock" ? device.state : device.state;
+  const [rainLevel, setRainLevel] = useState<string | null>(null);
 
   const stateLabel = (() => {
     if (device.type === "lock") return device.state ? "ล็อคอยู่" : "ปลดล็อค";
+    if (device.type === "rack") return device.state ? "กางอยู่" : "พับเก็บ";
     return device.state ? "เปิด" : "ปิด";
   })();
+
+  const handleCheckRain = async () => {
+    try {
+      const ip = curtainIp || "192.168.1.50";
+      const res = await fetch(`http://${ip}/rain`);
+      if (!res.ok) throw new Error("Network error");
+      const data = await res.text();
+      setRainLevel(data);
+      toast.success(`เช็คระดับน้ำฝนสำเร็จ: ${data}`);
+    } catch (error) {
+      toast.error(`ไม่สามารถเช็คระดับน้ำฝนได้ ตรวจสอบว่าบอร์ดเปิดอยู่ หรือ IP ถูกต้อง`);
+    }
+  };
 
   return (
     <div
@@ -123,46 +146,13 @@ function DeviceCard({
         )}
       </div>
 
-      {/* AC temperature controls */}
-      {device.type === "ac" && device.state && device.temperature !== undefined && (
-        <div className="mt-4 space-y-3 border-t border-border pt-4">
+      {device.type === "curtain" && (
+        <div className="mt-4 border-t border-border pt-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">อุณหภูมิ</span>
-            <span className="text-2xl font-bold text-primary">
-              {device.temperature}°C
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() =>
-                onUpdate(device.id, {
-                  temperature: Math.max(16, (device.temperature ?? 24) - 1),
-                })
-              }
-            >
-              <Minus className="h-4 w-4" />
+            <Button size="sm" variant="outline" onClick={handleCheckRain} className="text-xs text-blue-500 hover:text-blue-600">
+              <CloudRain className="mr-2 h-3.5 w-3.5" /> เช็คระดับน้ำฝน
             </Button>
-            <Slider
-              value={[device.temperature]}
-              min={16}
-              max={30}
-              step={1}
-              onValueChange={(v) => onUpdate(device.id, { temperature: v[0] })}
-              className="flex-1"
-            />
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() =>
-                onUpdate(device.id, {
-                  temperature: Math.min(30, (device.temperature ?? 24) + 1),
-                })
-              }
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            {rainLevel && <span className="text-xs font-semibold text-blue-600">{rainLevel}</span>}
           </div>
         </div>
       )}

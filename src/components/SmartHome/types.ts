@@ -1,11 +1,10 @@
-export type DeviceType = "light" | "ac" | "lock" | "curtain" | "fan";
+export type DeviceType = "light" | "rack" | "lock" | "curtain" | "fan";
 
 export interface Device {
   id: string;
   type: DeviceType;
   name: string;
   state: boolean; // on/off, locked/unlocked, open/closed
-  temperature?: number; // for AC
 }
 
 export interface Room {

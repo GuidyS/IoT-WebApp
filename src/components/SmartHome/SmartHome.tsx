@@ -8,6 +8,8 @@ import { seedDeviceStates } from "@/lib/test.functions";
 import { useState } from "react";
 import { Loader2, Wifi, WifiOff, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDeviceSettings } from "@/hooks/useDeviceSettings";
+import { DeviceSettingsDialog } from "./DeviceSettingsDialog";
 
 const initialRooms: Room[] = [
   {
@@ -17,7 +19,6 @@ const initialRooms: Room[] = [
     x: 4, y: 4, width: 52, height: 32,
     devices: [
       { id: "living-light", type: "light", name: "ไฟเพดาน", state: true },
-      { id: "living-ac", type: "ac", name: "แอร์", state: true, temperature: 24 },
       { id: "living-curtain", type: "curtain", name: "ม่านอัตโนมัติ", state: false },
     ],
   },
@@ -38,7 +39,7 @@ const initialRooms: Room[] = [
     x: 4, y: 36, width: 36, height: 30,
     devices: [
       { id: "bedroom-light", type: "light", name: "ไฟหัวเตียง", state: false },
-      { id: "bedroom-ac", type: "ac", name: "แอร์", state: false, temperature: 26 },
+      { id: "bedroom-rack", type: "rack", name: "ราวตากผ้า", state: false },
       { id: "bedroom-lock", type: "lock", name: "ประตูห้องนอน", state: true },
     ],
   },
@@ -84,6 +85,8 @@ export function SmartHome() {
   const [selectedRoomId, setSelectedRoomId] = useState<string>("living");
   const [localRooms, setLocalRooms] = useState<Room[]>(initialRooms);
 
+  const { curtainIp, rackIp, saveSettings } = useDeviceSettings();
+
   const { data, isLoading, isError, dataUpdatedAt } = useQuery({
     queryKey: ["device-states"],
     queryFn: () => getDeviceStates(),
@@ -117,6 +120,25 @@ export function SmartHome() {
     const device = selectedRoom.devices.find((d) => d.id === deviceId);
     if (!device) return;
     const next = { ...device, ...updates };
+
+    // --- Local ESP32 Integration ---
+    if (deviceId === "living-curtain" && updates.state !== undefined) {
+      fetch(`http://${curtainIp}${updates.state ? "/stepper/open" : "/stepper/close"}`)
+        .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
+        .catch(e => {
+          console.error("Curtain Error:", e);
+          toast.error(`ส่งคำสั่งม่านไม่สำเร็จ (IP: ${curtainIp}) - โปรดเช็ควง LAN หรือ IP`);
+        });
+    }
+    if (deviceId === "bedroom-rack" && updates.state !== undefined) {
+      fetch(`http://${rackIp}${updates.state ? "/servo/open" : "/servo/close"}`)
+        .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
+        .catch(e => {
+          console.error("Rack Error:", e);
+          toast.error(`ส่งคำสั่งราวตากผ้าไม่สำเร็จ (IP: ${rackIp}) - โปรดเช็ควง LAN หรือ IP`);
+        });
+    }
+
     mutation.mutate({
       deviceId,
       state: next.state,
@@ -152,6 +174,8 @@ export function SmartHome() {
             <span>ออฟไลน์ — ใช้ค่าเริ่มต้น ({data?.error ?? "no data"})</span>
           </>
         )}
+        <DeviceSettingsDialog currentCurtainIp={curtainIp} currentRackIp={rackIp} onSave={saveSettings} />
+
         <Button
           size="sm"
           variant="outline"
@@ -170,7 +194,7 @@ export function SmartHome() {
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <FloorPlan rooms={localRooms} selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} />
-        <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} />
+        <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} curtainIp={curtainIp} />
       </div>
     </div>
   );
