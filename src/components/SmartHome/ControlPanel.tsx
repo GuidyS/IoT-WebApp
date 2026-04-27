@@ -12,7 +12,8 @@ import {
   Minus,
   Plus,
   SunDim,
-  CloudRain
+  CloudRain,
+  UserCheck
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ interface Props {
   room: Room;
   onUpdateDevice: (deviceId: string, updates: Partial<Device>) => void;
   curtainIp?: string;
+  doorIp?: string;
 }
 
 const deviceIcon = {
@@ -32,7 +34,7 @@ const deviceIcon = {
   rack: SunDim,
 };
 
-export function ControlPanel({ room, onUpdateDevice, curtainIp }: Props) {
+export function ControlPanel({ room, onUpdateDevice, curtainIp, doorIp }: Props) {
   const activeCount = room.devices.filter((d) => {
     if (d.type === "lock") return !d.state; // unlocked = "active warning"
     return d.state;
@@ -55,7 +57,7 @@ export function ControlPanel({ room, onUpdateDevice, curtainIp }: Props) {
 
       <div className="space-y-3">
         {room.devices.map((device) => (
-          <DeviceCard key={device.id} device={device} onUpdate={onUpdateDevice} curtainIp={curtainIp} />
+          <DeviceCard key={device.id} device={device} onUpdate={onUpdateDevice} curtainIp={curtainIp} doorIp={doorIp} />
         ))}
       </div>
 
@@ -71,14 +73,17 @@ function DeviceCard({
   device,
   onUpdate,
   curtainIp,
+  doorIp,
 }: {
   device: Device;
   onUpdate: (id: string, updates: Partial<Device>) => void;
   curtainIp?: string;
+  doorIp?: string;
 }) {
   const Icon = device.type === "lock" && !device.state ? LockOpen : deviceIcon[device.type];
   const isActive = device.type === "lock" ? device.state : device.state;
   const [rainLevel, setRainLevel] = useState<string | null>(null);
+  const [rfidLog, setRfidLog] = useState<{name: string, role: string, timestamp: string, status: string} | null>(null);
 
   const stateLabel = (() => {
     if (device.type === "lock") return device.state ? "ล็อคอยู่" : "ปลดล็อค";
@@ -96,6 +101,19 @@ function DeviceCard({
       toast.success(`เช็คระดับน้ำฝนสำเร็จ: ${data}`);
     } catch (error) {
       toast.error(`ไม่สามารถเช็คระดับน้ำฝนได้ ตรวจสอบว่าบอร์ดเปิดอยู่ หรือ IP ถูกต้อง`);
+    }
+  };
+
+  const handleCheckLogs = async () => {
+    try {
+      const ip = doorIp || "192.168.1.51";
+      const res = await fetch(`http://${ip}/logs`);
+      if (!res.ok) throw new Error("Network error");
+      const data = await res.json();
+      setRfidLog(data);
+      toast.success(`ดึงข้อมูลสแกนบัตรสำเร็จ`);
+    } catch (error) {
+      toast.error(`ดึงข้อมูลสแกนบัตรไม่ได้ ลองเช็ค CORS และ IP ของประตูดูครับ`);
     }
   };
 
@@ -153,6 +171,36 @@ function DeviceCard({
               <CloudRain className="mr-2 h-3.5 w-3.5" /> เช็คระดับน้ำฝน
             </Button>
             {rainLevel && <span className="text-xs font-semibold text-blue-600">{rainLevel}</span>}
+          </div>
+        </div>
+      )}
+
+      {device.type === "lock" && (
+        <div className="mt-4 border-t border-border pt-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <Button size="sm" variant="outline" onClick={handleCheckLogs} className="text-xs text-emerald-600 hover:text-emerald-700 w-full sm:w-auto">
+                <UserCheck className="mr-2 h-3.5 w-3.5" /> ตรวจสอบประวัติสแกนบัตร (RFID)
+              </Button>
+            </div>
+            {rfidLog && (
+              <div className="rounded-lg bg-secondary/50 p-3 text-xs mt-1">
+                <div className="flex justify-between border-b border-border/50 pb-1 mb-1">
+                  <span className="text-muted-foreground">ชื่อผู้สแกน:</span>
+                  <span className="font-semibold text-foreground">{rfidLog.name} ({rfidLog.role})</span>
+                </div>
+                <div className="flex justify-between border-b border-border/50 pb-1 mb-1">
+                  <span className="text-muted-foreground">สถานะ:</span>
+                  <span className={`font-semibold ${rfidLog.status === "Granted" ? "text-emerald-500" : "text-destructive"}`}>
+                    {rfidLog.status === "Granted" ? "อนุญาตให้เข้า" : "ไม่อนุญาต"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">เวลา:</span>
+                  <span className="text-foreground">{rfidLog.timestamp}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

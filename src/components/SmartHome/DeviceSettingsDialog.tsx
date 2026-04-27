@@ -17,22 +17,25 @@ import { toast } from "sonner";
 interface Props {
   currentCurtainIp: string;
   currentRackIp: string;
-  onSave: (curtainIp: string, rackIp: string) => void;
+  currentDoorIp: string;
+  onSave: (curtainIp: string, rackIp: string, doorIp: string) => void;
 }
 
-export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, onSave }: Props) {
+export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentDoorIp, onSave }: Props) {
   const [open, setOpen] = useState(false);
   const [curtainIp, setCurtainIp] = useState(currentCurtainIp);
   const [rackIp, setRackIp] = useState(currentRackIp);
+  const [doorIp, setDoorIp] = useState(currentDoorIp);
 
   // Sync state when props change
   useEffect(() => {
     setCurtainIp(currentCurtainIp);
     setRackIp(currentRackIp);
-  }, [currentCurtainIp, currentRackIp, open]);
+    setDoorIp(currentDoorIp);
+  }, [currentCurtainIp, currentRackIp, currentDoorIp, open]);
 
   const handleSave = () => {
-    onSave(curtainIp, rackIp);
+    onSave(curtainIp, rackIp, doorIp);
     setOpen(false);
     toast.success("บันทึกการตั้งค่า IP เรียบร้อยแล้ว");
   };
@@ -75,6 +78,18 @@ export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, onSave }
               onChange={(e) => setRackIp(e.target.value)}
               className="col-span-3"
               placeholder="172.20.10.3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="door-ip" className="text-right text-emerald-600">
+              IP ประตูบ้าน
+            </Label>
+            <Input
+              id="door-ip"
+              value={doorIp}
+              onChange={(e) => setDoorIp(e.target.value)}
+              className="col-span-3"
+              placeholder="192.168.1.51"
             />
           </div>
         </div>

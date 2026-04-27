@@ -5,6 +5,8 @@ export interface Device {
   type: DeviceType;
   name: string;
   state: boolean; // on/off, locked/unlocked, open/closed
+  temperature?: number; // for AC
+  powerConsumption?: number; // in Watts
 }
 
 export interface Room {
