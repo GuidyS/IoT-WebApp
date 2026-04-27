@@ -98,7 +98,7 @@ export function SmartHome() {
   const [localRooms, setLocalRooms] = useState<Room[]>(initialRooms);
   const [activeTab, setActiveTab] = useState<"floor" | "electricity">("floor");
 
-  const { curtainIp, rackIp, doorIp, saveSettings } = useDeviceSettings();
+  const { curtainIp, rackIp, doorIp, lightIp, saveSettings } = useDeviceSettings();
 
   const { data, isLoading, isError, dataUpdatedAt } = useQuery({
     queryKey: ["device-states"],
@@ -149,6 +149,30 @@ export function SmartHome() {
           toast.error(`ส่งคำสั่งราวตากผ้าไม่สำเร็จ (IP: ${rackIp}) - โปรดเช็ควง LAN หรือ IP`);
         });
     }
+
+    // --- Light Control Integration ---
+    const lightMapping: Record<string, number> = {
+      "bedroom-light": 5,
+      "bath-light": 18,
+      "kitchen-light": 19,
+      "garage-light": 21,
+      "living-light": 22
+    };
+
+    if (lightMapping[deviceId] && updates.state !== undefined) {
+      const pin = lightMapping[deviceId];
+      const state = updates.state ? 1 : 0;
+      const { lightIp } = JSON.parse(localStorage.getItem("device-settings") || "{}");
+      
+      if (lightIp) {
+        fetch(`http://${lightIp}/set?pin=${pin}&state=${state}`)
+          .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
+          .catch(e => {
+            console.error("Light Error:", e);
+            toast.error(`ส่งคำสั่งไฟไม่สำเร็จ (IP: ${lightIp}) - โปรดเช็ควง LAN หรือ IP`);
+          });
+      }
+    }
     if ((deviceId === "living-lock" || deviceId === "garage-lock") && updates.state !== undefined) {
       // state: true = Open, state: false = Closed
       fetch(`http://${doorIp}${updates.state ? "/open" : "/close"}`)
@@ -195,7 +219,7 @@ export function SmartHome() {
               <span>ออฟไลน์ — ใช้ค่าเริ่มต้น ({data?.error ?? "no data"})</span>
             </>
           )}
-          <DeviceSettingsDialog currentCurtainIp={curtainIp} currentRackIp={rackIp} currentDoorIp={doorIp} onSave={saveSettings} />
+          <DeviceSettingsDialog currentCurtainIp={curtainIp} currentRackIp={rackIp} currentDoorIp={doorIp} currentLightIp={lightIp} onSave={saveSettings} />
 
           <Button
             size="sm"

@@ -18,24 +18,27 @@ interface Props {
   currentCurtainIp: string;
   currentRackIp: string;
   currentDoorIp: string;
-  onSave: (curtainIp: string, rackIp: string, doorIp: string) => void;
+  currentLightIp: string;
+  onSave: (curtainIp: string, rackIp: string, doorIp: string, lightIp: string) => void;
 }
 
-export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentDoorIp, onSave }: Props) {
+export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentDoorIp, currentLightIp, onSave }: Props) {
   const [open, setOpen] = useState(false);
   const [curtainIp, setCurtainIp] = useState(currentCurtainIp);
   const [rackIp, setRackIp] = useState(currentRackIp);
   const [doorIp, setDoorIp] = useState(currentDoorIp);
+  const [lightIp, setLightIp] = useState(currentLightIp);
 
   // Sync state when props change
   useEffect(() => {
     setCurtainIp(currentCurtainIp);
     setRackIp(currentRackIp);
     setDoorIp(currentDoorIp);
-  }, [currentCurtainIp, currentRackIp, currentDoorIp, open]);
+    setLightIp(currentLightIp);
+  }, [currentCurtainIp, currentRackIp, currentDoorIp, currentLightIp, open]);
 
   const handleSave = () => {
-    onSave(curtainIp, rackIp, doorIp);
+    onSave(curtainIp, rackIp, doorIp, lightIp);
     setOpen(false);
     toast.success("บันทึกการตั้งค่า IP เรียบร้อยแล้ว");
   };
@@ -90,6 +93,18 @@ export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentD
               onChange={(e) => setDoorIp(e.target.value)}
               className="col-span-3"
               placeholder="192.168.1.51"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="light-ip" className="text-right text-yellow-600">
+              IP บอร์ดไฟ
+            </Label>
+            <Input
+              id="light-ip"
+              value={lightIp}
+              onChange={(e) => setLightIp(e.target.value)}
+              className="col-span-3"
+              placeholder="192.168.1.52"
             />
           </div>
         </div>
