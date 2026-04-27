@@ -103,4 +103,5 @@ export const mongo = {
 export const COLLECTIONS = {
   deviceStates: "device_states",
   automations: "automations",
+  deviceStateLogs: "device_state_logs",
 } as const;

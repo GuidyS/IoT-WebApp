@@ -8,17 +8,19 @@ export const seedDeviceStates = createServerFn({ method: "POST" }).handler(async
 
   // Insert/upsert + เพิ่ม fields ใหม่: location, powerWatts, lastChangedBy
   const seed = [
-    { deviceId: "living-light", state: true, location: "ห้องนั่งเล่น", powerWatts: 18, lastChangedBy: "seed" },
-    { deviceId: "living-ac", state: true, temperature: 24, location: "ห้องนั่งเล่น", powerWatts: 1200, lastChangedBy: "seed" },
-    { deviceId: "living-curtain", state: false, location: "ห้องนั่งเล่น", powerWatts: 5, lastChangedBy: "seed" },
-    { deviceId: "kitchen-light", state: false, location: "ห้องครัว", powerWatts: 12, lastChangedBy: "seed" },
-    { deviceId: "kitchen-fan", state: false, location: "ห้องครัว", powerWatts: 35, lastChangedBy: "seed" },
-    { deviceId: "bedroom-light", state: false, location: "ห้องนอน", powerWatts: 15, lastChangedBy: "seed" },
-    { deviceId: "bedroom-ac", state: false, temperature: 26, location: "ห้องนอน", powerWatts: 900, lastChangedBy: "seed" },
-    { deviceId: "bedroom-lock", state: true, location: "ห้องนอน", powerWatts: 2, lastChangedBy: "seed" },
-    { deviceId: "bath-light", state: false, location: "ห้องน้ำ", powerWatts: 10, lastChangedBy: "seed" },
-    { deviceId: "garage-light", state: false, location: "โรงรถ", powerWatts: 24, lastChangedBy: "seed" },
-    { deviceId: "garage-lock", state: true, location: "โรงรถ", powerWatts: 3, lastChangedBy: "seed" },
+    { deviceId: "bedroom-curtain", state: false, location: "ห้องนอน", powerWatts: 10, lastChangedBy: "seed" },
+    { deviceId: "bedroom-light", state: false, location: "ห้องนอน", powerWatts: 30, lastChangedBy: "seed" },
+    { deviceId: "bath-fan", state: false, location: "ห้องน้ำ", powerWatts: 40, lastChangedBy: "seed" },
+    { deviceId: "bath-light", state: false, location: "ห้องน้ำ", powerWatts: 20, lastChangedBy: "seed" },
+    { deviceId: "kitchen-hood", state: false, location: "ห้องครัว", powerWatts: 150, lastChangedBy: "seed" },
+    { deviceId: "kitchen-detector", state: true, location: "ห้องครัว", powerWatts: 5, lastChangedBy: "seed" },
+    { deviceId: "kitchen-pump", state: false, location: "ห้องครัว", powerWatts: 400, lastChangedBy: "seed" },
+    { deviceId: "kitchen-light", state: false, location: "ห้องครัว", powerWatts: 40, lastChangedBy: "seed" },
+    { deviceId: "garage-lock", state: true, location: "โรงจอดรถ", powerWatts: 0, lastChangedBy: "seed" },
+    { deviceId: "garage-light", state: false, location: "โรงจอดรถ", powerWatts: 60, lastChangedBy: "seed" },
+    { deviceId: "living-lock", state: true, location: "ห้องนั่งเล่น", powerWatts: 0, lastChangedBy: "seed" },
+    { deviceId: "living-light", state: false, location: "ห้องนั่งเล่น", powerWatts: 60, lastChangedBy: "seed" },
+    { deviceId: "bedroom-rack", state: false, location: "นอกบ้าน", powerWatts: 50, lastChangedBy: "seed" },
   ];
 
   const results: Array<{ deviceId: string; ok: boolean; error?: string }> = [];

@@ -1,90 +1,135 @@
 import { Room } from "./types";
-import { Zap, Home, Clock, Calendar, CreditCard, TrendingUp } from "lucide-react";
+import { Zap, Home, TrendingUp, Cpu, RefreshCw, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getDeviceUsageStats } from "@/lib/devices.functions";
 
 interface Props {
   rooms: Room[];
 }
 
 export function ElectricityCalculator({ rooms }: Props) {
-  // Calculate total power consumption (Watts)
-  const totalWatts = rooms.reduce((total, room) => {
-    return total + room.devices.reduce((roomTotal, device) => {
-      return roomTotal + (device.state ? (device.powerConsumption || 0) : 0);
-    }, 0);
-  }, 0);
+  const ratePerUnit = 4.5; // Baht per Unit (kWh)
 
-  const kWh = totalWatts / 1000;
-  const ratePerUnit = 4.5; // Example: 4.5 Baht per Unit (kWh)
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["device-usage-stats"],
+    queryFn: async () => {
+      const res = await getDeviceUsageStats();
+      if (res.error) throw new Error(res.error);
+      return res.stats;
+    },
+    refetchInterval: 10000, // Refetch every 10s for real-time updates
+  });
 
-  const costPerHour = kWh * ratePerUnit;
-  const costPerDay = costPerHour * 24;
-  const costPerMonth = costPerDay * 30;
+  const stats = data || {};
+  let totalHouseCost = 0;
+  let totalHouseWattsUsed = 0; // Total energy consumed in Wh
+
+  // Calculate costs and enrich room data
+  const enrichedRooms = rooms.map((room) => {
+    let roomCost = 0;
+    let roomEnergyWh = 0;
+
+    const enrichedDevices = room.devices.map((device) => {
+      const hoursUsed = stats[device.id] || 0;
+      const powerW = device.powerConsumption || 0;
+      const energyWh = powerW * hoursUsed;
+      const energyKWh = energyWh / 1000;
+      const cost = energyKWh * ratePerUnit;
+
+      roomCost += cost;
+      roomEnergyWh += energyWh;
+
+      return { ...device, hoursUsed, cost, energyWh };
+    });
+
+    totalHouseCost += roomCost;
+    totalHouseWattsUsed += roomEnergyWh;
+
+    return { ...room, devices: enrichedDevices, cost: roomCost, energyWh: roomEnergyWh };
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex h-40 items-center justify-center animate-pulse">
+        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 text-destructive h-40">
+        <AlertCircle className="h-8 w-8" />
+        <p>ไม่สามารถโหลดข้อมูลการใช้ไฟได้</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard 
-          label="ค่าไฟประมาณการ / ชม." 
-          value={costPerHour.toFixed(2)} 
-          unit="บาท" 
-          icon={Clock} 
-          gradient="from-blue-500/20 to-cyan-500/20"
-          iconColor="text-blue-500"
-        />
-        <StatCard 
-          label="ค่าไฟประมาณการ / วัน" 
-          value={costPerDay.toFixed(0)} 
-          unit="บาท" 
-          icon={Calendar} 
-          gradient="from-indigo-500/20 to-purple-500/20"
-          iconColor="text-indigo-500"
-        />
-        <StatCard 
-          label="ค่าไฟประมาณการ / เดือน" 
-          value={costPerMonth.toLocaleString("th-TH", { maximumFractionDigits: 0 })} 
-          unit="บาท" 
-          icon={CreditCard} 
-          gradient="from-emerald-500/20 to-teal-500/20"
-          iconColor="text-emerald-500"
-        />
-      </div>
-
-      <div className="rounded-2xl border border-border bg-[var(--gradient-card)] p-6 shadow-[var(--shadow-card)]">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500">
-              <TrendingUp className="h-6 w-6" />
+      {/* Total House Cost Overview */}
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-amber-500/20 to-orange-500/20 p-6 shadow-[var(--shadow-card)] backdrop-blur-md">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-600">
+              <Zap className="h-8 w-8" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">รายละเอียดการใช้พลังงาน</h2>
-              <p className="text-sm text-muted-foreground">สรุปการใช้ไฟแยกตามแต่ละห้อง</p>
+              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">ค่าไฟสะสมรวมทั้งบ้าน</h2>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-4xl font-black text-foreground">{totalHouseCost.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span className="text-lg font-medium text-muted-foreground">บาท</span>
+              </div>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">รวมทั้งหมดตอนนี้</p>
-            <p className="text-2xl font-black text-amber-500">{totalWatts} <span className="text-sm font-normal">W</span></p>
+            <p className="text-sm text-muted-foreground">ใช้พลังงานไปแล้ว</p>
+            <p className="text-xl font-bold text-amber-600">{(totalHouseWattsUsed / 1000).toFixed(2)} kWh</p>
           </div>
         </div>
+      </div>
 
-        <div className="space-y-4">
-          {rooms.map((room) => {
-            const roomWatts = room.devices.reduce((sum, d) => sum + (d.state ? (d.powerConsumption || 0) : 0), 0);
-            const percentage = totalWatts > 0 ? (roomWatts / totalWatts) * 100 : 0;
-            
+      {/* Breakdown by Room */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-amber-500" />
+          สรุปค่าไฟแยกตามห้อง
+        </h3>
+        
+        <div className="grid gap-4 md:grid-cols-2">
+          {enrichedRooms.map((room) => {
+            if (room.cost === 0 && room.devices.length > 0) {
+              // Optionally hide rooms with 0 cost, but showing them is better for clarity
+            }
             return (
-              <div key={room.id} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+              <div key={room.id} className="rounded-xl border border-border bg-[var(--gradient-card)] p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
                   <div className="flex items-center gap-2">
-                    <Home className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium text-foreground">{room.name}</span>
+                    <Home className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-semibold text-foreground text-lg">{room.name}</span>
                   </div>
-                  <span className="text-muted-foreground">{roomWatts} W ({percentage.toFixed(0)}%)</span>
+                  <span className="font-bold text-amber-500">{room.cost.toFixed(2)} บาท</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary/50">
-                  <div 
-                    className="h-full bg-primary transition-all duration-1000 ease-out" 
-                    style={{ width: `${percentage}%` }}
-                  />
+                
+                <div className="space-y-3">
+                  {room.devices.map((device) => (
+                    <div key={device.id} className="flex flex-col gap-1 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Cpu className="h-4 w-4 text-muted-foreground/60" />
+                          <span className="text-foreground">{device.name}</span>
+                        </div>
+                        <span className="font-medium">{device.cost.toFixed(2)} บาท</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground pl-6">
+                        <span>เปิดใช้งาน: {device.hoursUsed > 0 ? (device.hoursUsed).toFixed(1) : "0"} ชม.</span>
+                        <span>{(device.energyWh / 1000).toFixed(2)} kWh</span>
+                      </div>
+                    </div>
+                  ))}
+                  {room.devices.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">ไม่มีอุปกรณ์กินไฟในห้องนี้</p>
+                  )}
                 </div>
               </div>
             );
@@ -93,22 +138,7 @@ export function ElectricityCalculator({ rooms }: Props) {
       </div>
 
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-600/80">
-        💡 <strong>เคล็ดลับประหยัดไฟ:</strong> การปิดไฟเมื่อไม่ได้ใช้งานห้องนอน สามารถช่วยลดค่าไฟลงได้ประมาณ {(40 * 24 * 30 / 1000 * ratePerUnit).toFixed(0)} บาทต่อเดือน
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, unit, icon: Icon, gradient, iconColor }: any) {
-  return (
-    <div className={`rounded-2xl border border-border bg-gradient-to-br ${gradient} p-5 shadow-sm backdrop-blur-md`}>
-      <div className="flex items-start justify-between">
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <Icon className={`h-5 w-5 ${iconColor}`} />
-      </div>
-      <div className="mt-2 flex items-baseline gap-1">
-        <h3 className="text-2xl font-bold text-foreground">{value}</h3>
-        <span className="text-sm text-muted-foreground">{unit}</span>
+        💡 <strong>หมายเหตุ:</strong> ระบบจะคำนวณค่าไฟจากการเปิดใช้งานจริง โดยบันทึกระยะเวลาเปิด-ปิด ของอุปกรณ์แต่ละชิ้น อ้างอิงค่าไฟเฉลี่ยที่ {ratePerUnit} บาท/หน่วย
       </div>
     </div>
   );
