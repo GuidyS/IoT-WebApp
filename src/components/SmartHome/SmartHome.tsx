@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import type { Room, Device } from "./types";
 import { FloorPlan } from "./FloorPlan";
 import { ControlPanel } from "./ControlPanel";
+import { ElectricityCalculator } from "./ElectricityCalculator";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDeviceStates, setDeviceState } from "@/lib/devices.functions";
 import { seedDeviceStates } from "@/lib/test.functions";
-import { Loader2, Wifi, WifiOff, Sprout } from "lucide-react";
+import { Loader2, Wifi, WifiOff, Sprout, LayoutGrid, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDeviceSettings } from "@/hooks/useDeviceSettings";
 import { DeviceSettingsDialog } from "./DeviceSettingsDialog";
@@ -95,6 +96,7 @@ export function SmartHome() {
   const qc = useQueryClient();
   const [selectedRoomId, setSelectedRoomId] = useState<string>("living");
   const [localRooms, setLocalRooms] = useState<Room[]>(initialRooms);
+  const [activeTab, setActiveTab] = useState<"floor" | "electricity">("floor");
 
   const { curtainIp, rackIp, doorIp, saveSettings } = useDeviceSettings();
 
@@ -171,48 +173,75 @@ export function SmartHome() {
   });
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-        {isLoading ? (
-          <>
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            <span>กำลังเชื่อมต่อ MongoDB…</span>
-          </>
-        ) : synced ? (
-          <>
-            <Wifi className="h-3.5 w-3.5 text-emerald-500" />
-            <span>
-              ซิงก์กับ ESP32 (อัปเดตล่าสุด {new Date(dataUpdatedAt).toLocaleTimeString("th-TH")})
-            </span>
-          </>
-        ) : (
-          <>
-            <WifiOff className="h-3.5 w-3.5 text-destructive" />
-            <span>ออฟไลน์ — ใช้ค่าเริ่มต้น ({data?.error ?? "no data"})</span>
-          </>
-        )}
-        <DeviceSettingsDialog currentCurtainIp={curtainIp} currentRackIp={rackIp} currentDoorIp={doorIp} onSave={saveSettings} />
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          {isLoading ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>กำลังเชื่อมต่อ MongoDB…</span>
+            </>
+          ) : synced ? (
+            <>
+              <Wifi className="h-3.5 w-3.5 text-emerald-500" />
+              <span>
+                ซิงก์กับ ESP32 (อัปเดตล่าสุด {new Date(dataUpdatedAt).toLocaleTimeString("th-TH")})
+              </span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="h-3.5 w-3.5 text-destructive" />
+              <span>ออฟไลน์ — ใช้ค่าเริ่มต้น ({data?.error ?? "no data"})</span>
+            </>
+          )}
+          <DeviceSettingsDialog currentCurtainIp={curtainIp} currentRackIp={rackIp} currentDoorIp={doorIp} onSave={saveSettings} />
 
-        <Button
-          size="sm"
-          variant="outline"
-          className="ml-auto h-7 text-xs"
-          onClick={() => seedMut.mutate()}
-          disabled={seedMut.isPending}
-        >
-          <Sprout className="h-3.5 w-3.5" />
-          {seedMut.isPending
-            ? "กำลังเขียน…"
-            : seedMut.data
-              ? `เพิ่มแล้ว ${seedMut.data.count} แถว ✓`
-              : "🌱 Seed test data"}
-        </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto h-7 text-xs"
+            onClick={() => seedMut.mutate()}
+            disabled={seedMut.isPending}
+          >
+            <Sprout className="h-3.5 w-3.5" />
+            {seedMut.isPending
+              ? "กำลังเขียน…"
+              : seedMut.data
+                ? `เพิ่มแล้ว ${seedMut.data.count} แถว ✓`
+                : "🌱 Seed test data"}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-1 backdrop-blur-md">
+          <Button 
+            variant={activeTab === "floor" ? "default" : "ghost"} 
+            size="sm" 
+            className="h-8 rounded-lg gap-2"
+            onClick={() => setActiveTab("floor")}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            แผนผังบ้าน
+          </Button>
+          <Button 
+            variant={activeTab === "electricity" ? "default" : "ghost"} 
+            size="sm" 
+            className="h-8 rounded-lg gap-2"
+            onClick={() => setActiveTab("electricity")}
+          >
+            <Zap className="h-4 w-4" />
+            คำนวณค่าไฟ
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <FloorPlan rooms={localRooms} selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} />
-        <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} curtainIp={curtainIp} doorIp={doorIp} />
-      </div>
+      {activeTab === "floor" ? (
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <FloorPlan rooms={localRooms} selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} />
+          <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} curtainIp={curtainIp} doorIp={doorIp} />
+        </div>
+      ) : (
+        <ElectricityCalculator rooms={localRooms} />
+      )}
     </div>
   );
 }
