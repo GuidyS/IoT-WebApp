@@ -150,7 +150,8 @@ export function SmartHome() {
         });
     }
     if ((deviceId === "living-lock" || deviceId === "garage-lock") && updates.state !== undefined) {
-      fetch(`http://${doorIp}${updates.state ? "/close" : "/open"}`)
+      // state: true = Open, state: false = Closed
+      fetch(`http://${doorIp}${updates.state ? "/open" : "/close"}`)
         .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
         .catch(e => {
           console.error("Door Error:", e);

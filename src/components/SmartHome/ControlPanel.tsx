@@ -92,7 +92,7 @@ function DeviceCard({
   const [rfidLog, setRfidLog] = useState<{name: string, role: string, timestamp: string, status: string} | null>(null);
 
   const stateLabel = (() => {
-    if (device.type === "lock") return device.state ? "ล็อคอยู่" : "ปลดล็อค";
+    if (device.type === "lock") return device.state ? "เปิดอยู่" : "ปิดสนิท";
     if (device.type === "rack") return device.state ? "กางอยู่" : "พับเก็บ";
     if (device.type === "detector") return device.state ? "เปิดการตรวจจับ" : "ปิดการตรวจจับ";
     return device.state ? "เปิด" : "ปิด";
@@ -158,10 +158,10 @@ function DeviceCard({
         {device.type === "lock" ? (
           <Button
             size="sm"
-            variant={device.state ? "secondary" : "destructive"}
+            variant={device.state ? "secondary" : "default"}
             onClick={() => onUpdate(device.id, { state: !device.state })}
           >
-            {device.state ? "ปลดล็อค" : "ล็อค"}
+            {device.state ? "ปิดประตู" : "เปิดประตู"}
           </Button>
         ) : (
           <Switch
