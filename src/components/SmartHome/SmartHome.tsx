@@ -51,7 +51,7 @@ const initialRooms: Room[] = [
     nameEn: "Garage",
     x: 20, y: 35, width: 28, height: 30,
     devices: [
-      { id: "garage-lock", type: "lock", name: "ประตูโรงจอดรถ", state: true, powerConsumption: 0 },
+      { id: "garage-lock", type: "lock", name: "ประตูโรงจอดรถ", state: true, powerConsumption: 30 },
       { id: "garage-light", type: "light", name: "ไฟโรงรถ", state: false, powerConsumption: 60 },
     ],
   },
@@ -61,7 +61,7 @@ const initialRooms: Room[] = [
     nameEn: "Living Room",
     x: 48, y: 35, width: 47, height: 30,
     devices: [
-      { id: "living-lock", type: "lock", name: "ประตูเข้าบ้าน", state: true, powerConsumption: 0 },
+      { id: "living-lock", type: "lock", name: "ประตูเข้าบ้าน", state: true, powerConsumption: 30 },
       { id: "living-light", type: "light", name: "ไฟนั่งเล่น", state: false, powerConsumption: 60 },
     ],
   },
@@ -76,7 +76,7 @@ const initialRooms: Room[] = [
   },
 ];
 
-function applyStates(rooms: Room[], states: Array<{ deviceId: string; state: boolean; temperature?: number }>) {
+function applyStates(rooms: Room[], states: Array<{ deviceId: string; state: boolean; temperature?: number; powerWatts?: number }>) {
   const map = new Map(states.map((s) => [s.deviceId, s]));
   return rooms.map((r) => ({
     ...r,
@@ -86,6 +86,7 @@ function applyStates(rooms: Room[], states: Array<{ deviceId: string; state: boo
       return {
         ...d,
         state: s.state,
+        powerConsumption: s.powerWatts !== undefined ? s.powerWatts : d.powerConsumption,
         ...(typeof s.temperature === "number" ? { temperature: s.temperature } : {}),
       };
     }),
@@ -98,7 +99,7 @@ export function SmartHome() {
   const [localRooms, setLocalRooms] = useState<Room[]>(initialRooms);
   const [activeTab, setActiveTab] = useState<"floor" | "electricity">("floor");
 
-  const { curtainIp, rackIp, doorIp, lightIp, saveSettings } = useDeviceSettings();
+  const { curtainIp, rackIp, mainDoorIp, garageDoorIp, lightIp, fanIp, hoodIp, saveSettings } = useDeviceSettings();
 
   const { data, isLoading, isError, dataUpdatedAt } = useQuery({
     queryKey: ["device-states"],
@@ -136,8 +137,11 @@ export function SmartHome() {
     const savedSettings = JSON.parse(localStorage.getItem("device-settings") || "{}");
     const currentCurtainIp = savedSettings.curtainIp || curtainIp;
     const currentRackIp = savedSettings.rackIp || rackIp;
-    const currentDoorIp = savedSettings.doorIp || doorIp;
+    const currentMainDoorIp = savedSettings.mainDoorIp || mainDoorIp;
+    const currentGarageDoorIp = savedSettings.garageDoorIp || garageDoorIp;
     const currentLightIp = savedSettings.lightIp || lightIp;
+    const currentFanIp = savedSettings.fanIp || fanIp;
+    const currentHoodIp = savedSettings.hoodIp || hoodIp;
 
     if (deviceId === "bedroom-curtain" && updates.state !== undefined) {
       fetch(`http://${currentCurtainIp}${updates.state ? "/stepper/open" : "/stepper/close"}`)
@@ -157,6 +161,26 @@ export function SmartHome() {
         });
     }
 
+    // --- Fan Control (Bathroom) ---
+    if (deviceId === "bath-fan" && updates.state !== undefined) {
+      fetch(`http://${currentFanIp}${updates.state ? "/fan/on" : "/fan/off"}`)
+        .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
+        .catch(e => {
+          console.error("Fan Error:", e);
+          toast.error(`ส่งคำสั่งพัดลมไม่สำเร็จ (IP: ${currentFanIp})`);
+        });
+    }
+
+    // --- Hood Control (Kitchen) ---
+    if (deviceId === "kitchen-hood" && updates.state !== undefined) {
+      fetch(`http://${currentHoodIp}${updates.state ? "/hood/on" : "/hood/off"}`)
+        .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
+        .catch(e => {
+          console.error("Hood Error:", e);
+          toast.error(`ส่งคำสั่งที่ดูดควันไม่สำเร็จ (IP: ${currentHoodIp})`);
+        });
+    }
+
     // --- Light Control Integration ---
     const lightMapping: Record<string, number> = {
       "bedroom-light": 5,
@@ -169,7 +193,7 @@ export function SmartHome() {
     if (lightMapping[deviceId] && updates.state !== undefined) {
       const pin = lightMapping[deviceId];
       const state = updates.state ? 1 : 0;
-      
+
       if (currentLightIp) {
         fetch(`http://${currentLightIp}/set?pin=${pin}&state=${state}`)
           .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
@@ -179,13 +203,24 @@ export function SmartHome() {
           });
       }
     }
-    if ((deviceId === "living-lock" || deviceId === "garage-lock") && updates.state !== undefined) {
-      // state: true = Open, state: false = Closed
-      fetch(`http://${currentDoorIp}${updates.state ? "/open" : "/close"}`)
+
+    // --- Main Door Control ---
+    if (deviceId === "living-lock" && updates.state !== undefined) {
+      fetch(`http://${currentMainDoorIp}${updates.state ? "/open" : "/close"}`)
         .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
         .catch(e => {
-          console.error("Door Error:", e);
-          toast.error(`ส่งคำสั่งประตูไม่สำเร็จ (IP: ${currentDoorIp})`);
+          console.error("Main Door Error:", e);
+          toast.error(`ส่งคำสั่งประตูบ้านไม่สำเร็จ (IP: ${currentMainDoorIp})`);
+        });
+    }
+
+    // --- Garage Door Control ---
+    if (deviceId === "garage-lock" && updates.state !== undefined) {
+      fetch(`http://${currentGarageDoorIp}${updates.state ? "/open" : "/close"}`)
+        .then(res => { if (!res.ok) throw new Error("Status " + res.status); })
+        .catch(e => {
+          console.error("Garage Door Error:", e);
+          toast.error(`ส่งคำสั่งประตูโรงรถไม่สำเร็จ (IP: ${currentGarageDoorIp})`);
         });
     }
 
@@ -225,7 +260,16 @@ export function SmartHome() {
               <span>ออฟไลน์ — ใช้ค่าเริ่มต้น ({data?.error ?? "no data"})</span>
             </>
           )}
-          <DeviceSettingsDialog currentCurtainIp={curtainIp} currentRackIp={rackIp} currentDoorIp={doorIp} currentLightIp={lightIp} onSave={saveSettings} />
+          <DeviceSettingsDialog
+            currentCurtainIp={curtainIp}
+            currentRackIp={rackIp}
+            currentMainDoorIp={mainDoorIp}
+            currentGarageDoorIp={garageDoorIp}
+            currentLightIp={lightIp}
+            currentFanIp={fanIp}
+            currentHoodIp={hoodIp}
+            onSave={saveSettings}
+          />
 
           <Button
             size="sm"
@@ -244,18 +288,18 @@ export function SmartHome() {
         </div>
 
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-1 backdrop-blur-md">
-          <Button 
-            variant={activeTab === "floor" ? "default" : "ghost"} 
-            size="sm" 
+          <Button
+            variant={activeTab === "floor" ? "default" : "ghost"}
+            size="sm"
             className="h-8 rounded-lg gap-2"
             onClick={() => setActiveTab("floor")}
           >
             <LayoutGrid className="h-4 w-4" />
             แผนผังบ้าน
           </Button>
-          <Button 
-            variant={activeTab === "electricity" ? "default" : "ghost"} 
-            size="sm" 
+          <Button
+            variant={activeTab === "electricity" ? "default" : "ghost"}
+            size="sm"
             className="h-8 rounded-lg gap-2"
             onClick={() => setActiveTab("electricity")}
           >
@@ -268,7 +312,12 @@ export function SmartHome() {
       {activeTab === "floor" ? (
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           <FloorPlan rooms={localRooms} selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} />
-          <ControlPanel room={selectedRoom} onUpdateDevice={updateDevice} curtainIp={curtainIp} doorIp={doorIp} />
+          <ControlPanel
+            room={selectedRoom}
+            onUpdateDevice={updateDevice}
+            curtainIp={curtainIp}
+            doorIp={selectedRoomId === "living" ? mainDoorIp : selectedRoomId === "garage" ? garageDoorIp : undefined}
+          />
         </div>
       ) : (
         <ElectricityCalculator rooms={localRooms} />

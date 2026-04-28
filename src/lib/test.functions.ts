@@ -16,9 +16,9 @@ export const seedDeviceStates = createServerFn({ method: "POST" }).handler(async
     { deviceId: "kitchen-detector", state: true, location: "ห้องครัว", powerWatts: 5, lastChangedBy: "seed" },
     { deviceId: "kitchen-pump", state: false, location: "ห้องครัว", powerWatts: 400, lastChangedBy: "seed" },
     { deviceId: "kitchen-light", state: false, location: "ห้องครัว", powerWatts: 40, lastChangedBy: "seed" },
-    { deviceId: "garage-lock", state: true, location: "โรงจอดรถ", powerWatts: 0, lastChangedBy: "seed" },
+    { deviceId: "garage-lock", state: true, location: "โรงจอดรถ", powerWatts: 30, lastChangedBy: "seed" },
     { deviceId: "garage-light", state: false, location: "โรงจอดรถ", powerWatts: 60, lastChangedBy: "seed" },
-    { deviceId: "living-lock", state: true, location: "ห้องนั่งเล่น", powerWatts: 0, lastChangedBy: "seed" },
+    { deviceId: "living-lock", state: true, location: "ห้องนั่งเล่น", powerWatts: 30, lastChangedBy: "seed" },
     { deviceId: "living-light", state: false, location: "ห้องนั่งเล่น", powerWatts: 60, lastChangedBy: "seed" },
     { deviceId: "bedroom-rack", state: false, location: "นอกบ้าน", powerWatts: 50, lastChangedBy: "seed" },
   ];

@@ -17,28 +17,37 @@ import { toast } from "sonner";
 interface Props {
   currentCurtainIp: string;
   currentRackIp: string;
-  currentDoorIp: string;
+  currentMainDoorIp: string;
+  currentGarageDoorIp: string;
   currentLightIp: string;
-  onSave: (curtainIp: string, rackIp: string, doorIp: string, lightIp: string) => void;
+  currentFanIp: string;
+  currentHoodIp: string;
+  onSave: (curtainIp: string, rackIp: string, mainDoorIp: string, garageDoorIp: string, lightIp: string, fanIp: string, hoodIp: string) => void;
 }
 
-export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentDoorIp, currentLightIp, onSave }: Props) {
+export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentMainDoorIp, currentGarageDoorIp, currentLightIp, currentFanIp, currentHoodIp, onSave }: Props) {
   const [open, setOpen] = useState(false);
   const [curtainIp, setCurtainIp] = useState(currentCurtainIp);
   const [rackIp, setRackIp] = useState(currentRackIp);
-  const [doorIp, setDoorIp] = useState(currentDoorIp);
+  const [mainDoorIp, setMainDoorIp] = useState(currentMainDoorIp);
+  const [garageDoorIp, setGarageDoorIp] = useState(currentGarageDoorIp);
   const [lightIp, setLightIp] = useState(currentLightIp);
+  const [fanIp, setFanIp] = useState(currentFanIp);
+  const [hoodIp, setHoodIp] = useState(currentHoodIp);
 
   // Sync state when props change
   useEffect(() => {
     setCurtainIp(currentCurtainIp);
     setRackIp(currentRackIp);
-    setDoorIp(currentDoorIp);
+    setMainDoorIp(currentMainDoorIp);
+    setGarageDoorIp(currentGarageDoorIp);
     setLightIp(currentLightIp);
-  }, [currentCurtainIp, currentRackIp, currentDoorIp, currentLightIp, open]);
+    setFanIp(currentFanIp);
+    setHoodIp(currentHoodIp);
+  }, [currentCurtainIp, currentRackIp, currentMainDoorIp, currentGarageDoorIp, currentLightIp, currentFanIp, currentHoodIp, open]);
 
   const handleSave = () => {
-    onSave(curtainIp, rackIp, doorIp, lightIp);
+    onSave(curtainIp, rackIp, mainDoorIp, garageDoorIp, lightIp, fanIp, hoodIp);
     setOpen(false);
     toast.success("บันทึกการตั้งค่า IP เรียบร้อยแล้ว");
   };
@@ -58,7 +67,7 @@ export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentD
             กำหนด IP ของบอร์ดแต่ละตัว เพื่อให้ระบบสามารถสั่งงานได้ถูกต้อง
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="curtain-ip" className="text-right text-blue-600">
               IP ม่าน
@@ -84,15 +93,27 @@ export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentD
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="door-ip" className="text-right text-emerald-600">
+            <Label htmlFor="main-door-ip" className="text-right text-emerald-600">
               IP ประตูบ้าน
             </Label>
             <Input
-              id="door-ip"
-              value={doorIp}
-              onChange={(e) => setDoorIp(e.target.value)}
+              id="main-door-ip"
+              value={mainDoorIp}
+              onChange={(e) => setMainDoorIp(e.target.value)}
               className="col-span-3"
               placeholder="192.168.1.51"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="garage-door-ip" className="text-right text-emerald-700">
+              IP ประตูโรงรถ
+            </Label>
+            <Input
+              id="garage-door-ip"
+              value={garageDoorIp}
+              onChange={(e) => setGarageDoorIp(e.target.value)}
+              className="col-span-3"
+              placeholder="192.168.1.55"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -105,6 +126,30 @@ export function DeviceSettingsDialog({ currentCurtainIp, currentRackIp, currentD
               onChange={(e) => setLightIp(e.target.value)}
               className="col-span-3"
               placeholder="192.168.1.52"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="fan-ip" className="text-right text-cyan-600">
+              IP พัดลม
+            </Label>
+            <Input
+              id="fan-ip"
+              value={fanIp}
+              onChange={(e) => setFanIp(e.target.value)}
+              className="col-span-3"
+              placeholder="192.168.1.53"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="hood-ip" className="text-right text-orange-600">
+              IP ที่ดูดควัน
+            </Label>
+            <Input
+              id="hood-ip"
+              value={hoodIp}
+              onChange={(e) => setHoodIp(e.target.value)}
+              className="col-span-3"
+              placeholder="192.168.1.54"
             />
           </div>
         </div>
