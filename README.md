@@ -1,89 +1,74 @@
 # Smart Floor Pal (ระบบพื้นอัจฉริยะ) 🦶✨
 
-Smart Floor Pal คือโปรเจกต์มินิสมาร์ทโฮม (Mini Smart Home) ที่อาศัยการทำงานร่วมกันระหว่าง **แผ่นพื้นอัจฉริยะ (Smart Floor)** ที่เก็บข้อมูลแรงกด และ **Dashboard มอนิเตอร์บนเว็บไซต์** ทำให้ผู้ใช้งานสามารถมองเห็นสถานะการเดินเหยียบ หรือสั่งการเปิด-ปิดเครื่องใช้ไฟฟ้าต่างๆ ภายในบ้าน (เช่น ไฟเพดาน, แอร์) ได้แบบ Real-time!
+Smart Floor Pal คือโปรเจกต์มินิสมาร์ทโฮม (Mini Smart Home) ที่อาศัยการทำงานร่วมกันระหว่าง **แผ่นพื้นอัจฉริยะ (Smart Floor)** ที่เก็บข้อมูลแรงกด และ **Dashboard มอนิเตอร์บนเว็บไซต์** ทำให้ผู้ใช้งานสามารถมองเห็นสถานะการเดินเหยียบ หรือสั่งการเปิด-ปิดเครื่องใช้ไฟฟ้าต่างๆ ภายในบ้านได้แบบ Real-time พร้อมระบบคำนวณค่าไฟอัตโนมัติจากชั่วโมงการใช้งานจริง
 
 ---
 
-## 🛠️ โครงสร้างเทคโนโลยีที่ใช้ (Tech Stack)
+## 🌟 ฟีเจอร์หลัก (Key Features)
 
-### ฝั่งซอฟต์แวร์ (Frontend & Backend)
-- **Framework:** [TanStack Start](https://tanstack.com/start) (Vite + React) เรนเดอร์รวดเร็วแบบ Full-Stack
-- **Database:** MongoDB (ผ่าน Node.js Driver อย่างเป็นทางการ)
-- **Styling:** Tailwind CSS & Radix UI
-
-### ฝั่งฮาร์ดแวร์ (Hardware/IoT)
-- **Microcontroller:** ESP32 / NodeMCU (มีโค้ดตัวอย่างในโฟลเดอร์ `esp32_board`)
-- **Sensor:** เซนเซอร์วัดแรงกด (Load Cell) หรือ สวิตช์ปุ่มกดทั่วไป
+- **Real-time Monitoring**: ดูสถานะอุปกรณ์ภายในบ้านและตำแหน่งการเหยียบบนพื้นได้ทันที
+- **Interactive Floor Plan**: แผนผังบ้านแบบ Interactive ที่สามารถคลิกสั่งงานอุปกรณ์ได้
+- **Electricity Cost Calculation**: คำนวณค่าไฟแยกตามอุปกรณ์และห้อง โดยอิงจากเวลาที่เปิดใช้งานจริง
+- **Hardware Integration**: รองรับการส่งข้อมูลจากบอร์ด ESP32 ผ่าน REST API
+- **Automation System**: ระบบตั้งเวลาล่วงหน้าสำหรับอุปกรณ์ต่างๆ
 
 ---
 
-## 📋 Requirements (สิ่งที่ต้องเตรียมก่อนเริ่มงาน)
+## 🛠️ เทคโนโลยีที่ใช้ (Tech Stack)
 
-เพื่อให้การรันโปรเจกต์เป็นไปอย่างราบรื่น ผู้ใช้งานควรติดตั้งและเตรียมสิ่งเหล่านี้ให้พร้อม:
-1. **[Node.js](https://nodejs.org/en/)** (เวอร์ชัน 18 ขึ้นไป) และ npm (มักจะมาพร้อม Node.js)
-2. **โปรแกรม [Arduino IDE](https://www.arduino.cc/en/software)** (สำหรับการเขียนโค้ดลงบอร์ด ESP32)
-3. **บอร์ด ESP32 / ESP8266** และสาย USB สำหรับเชื่อมต่อ
-4. **บัญชี MongoDB Atlas** (หรือ MongoDB Local) เพื่อใช้เป็นฐานข้อมูล
+- **Frontend & Backend**: [TanStack Start](https://tanstack.com/start) (Vite + React)
+- **Database**: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (NoSQL)
+- **Styling**: Tailwind CSS & Lucide Icons
+- **Hardware**: ESP32 / Arduino (C++)
 
 ---
 
-## 🚀 วิธีการติดตั้งและรันโปรเจกต์ (Installation)
+## 📋 ความต้องการของระบบ (Requirements)
 
-1. **โคลนโปรเจกต์ (ถ้ามี) หรือเข้าสู่โฟลเดอร์โปรเจกต์:**
-   ```bash
-   cd smart-floor-pal-main
-   ```
+โปรดตรวจสอบสิ่งที่ต้องเตรียม (Hardware, Software, Cloud Services) ทั้งหมดได้ที่นี่:
+👉 [**REQUIREMENTS.md (คลิกเพื่ออ่าน)**](./REQUIREMENTS.md)
 
-2. **ติดตั้ง Dependencies ทั้งหมด:**
+---
+
+## 🚀 วิธีการติดตั้ง (Installation)
+
+1. **โคลนโปรเจกต์และติดตั้ง Library:**
    ```bash
    npm install
    ```
 
-3. **ตั้งค่าไฟล์ Environment:**
-   สร้างไฟล์ `.env` ที่ Root ของแฟ้มโปรเจกต์ และใส่ตัวแปรต่อไปนี้:
+2. **ตั้งค่า Environment Variables:**
+   สร้างไฟล์ `.env` ที่ root folder และใส่ค่าดังนี้:
    ```env
-   # รหัสสำหรับเชื่อมต่อฐานข้อมูล MongoDB Atlas (เปลี่ยน <db_password> เป็นรหัสผ่านจริง)
-   MONGODB_URI="mongodb+srv://<username>:<db_password>@cluster0.p3avs9t.mongodb.net/?appName=Cluster0"
+   # การเชื่อมต่อ MongoDB
+   MONGODB_URI="mongodb+srv://<user>:<password>@cluster.mongodb.net/?appName=Cluster0"
    MONGODB_DATABASE="smart_floor_pal"
-   
-   # กุญแจรหัสผ่านสำหรับบอร์ด ESP32 เพื่อใช้ส่งข้อมูลเข้ามา (ตั้งอะไรก็ได้)
-   DEVICE_INGEST_TOKEN="secret_token_1234"
+
+   # รหัสความปลอดภัยสำหรับการรับข้อมูลจาก ESP32
+   DEVICE_INGEST_TOKEN="your_secret_token"
    ```
 
-4. **รันเซิร์ฟเวอร์แบบ Development:**
+3. **รันโปรเจกต์:**
    ```bash
    npm run dev
    ```
-   จากนั้นเปิดบราวเซอร์ไปที่ `http://localhost:5173` (หรือตามพอร์ตที่ปรากฏใน Terminal) เพื่อดูเดโมหน้าเว็บ
+   เข้าชมผ่าน: `http://localhost:5173`
 
 ---
 
-## 📡 วิธีเชื่อมต่อกับอุปกรณ์ฮาร์ดแวร์ (ESP32 / NodeMCU)
+## 📡 การเชื่อมต่อ Hardware (ESP32)
 
-ในโปรเจกต์นี้จะมีโฟลเดอร์ชื่อ `esp32_board/` ซึ่งบรรจุไฟล์ `esp32_board.ino` เอาไว้ คุณสามารถเปิดไฟล์นี้ด้วยโปรแกรม **Arduino IDE** ได้ทันที
-
-**จุดที่ต้องแก้ไขในโค้ด C++ ก่อนอัพโหลดลงบอร์ด:**
-1. `ssid` และ `password` — เปลี่ยนเป็นชื่อและการตั้งค่าวง Wi-Fi ที่บ้านของคุณ
-2. `serverUrl` — ใส่เลข IP Address แอดเดรสของคอมพิวเตอร์เซิร์ฟเวอร์เรา (เช็คจากคำสั่ง `ipconfig`)
-3. `token` — ให้ตรงกับ `DEVICE_INGEST_TOKEN` ในไฟล์ `.env` ของเซิร์ฟเวอร์
-
-> **หมายเหตุการทำงาน:** บอร์ดจะทำงานโดยการส่งคำสั่ง HTTP POST มาที่เส้นทาง `/api/public/devices/state` ส่งเฉพาะเวลาที่มีการเปลี่ยนสถานะ (จากเหยียบ->ไม่เหยียบ หรือ ไม่เหยียบ->เหยียบ) เพื่อลดภาระการส่งข้อมูลซ้ำซ้อน
+คุณสามารถดูโค้ดตัวอย่างสำหรับบอร์ด ESP32 ได้ที่โฟลเดอร์ `esp32_board/`
+- ตรวจสอบให้มั่นใจว่า `DEVICE_INGEST_TOKEN` ใน `.env` ตรงกับในโค้ด Arduino
+- ระบุ IP Address ของคอมพิวเตอร์ที่รันเซิร์ฟเวอร์ในตัวแปร `serverUrl` ในโค้ด Arduino
 
 ---
 
-## 📂 โครงสร้างโฟลเดอร์ที่สำคัญ
+## 📖 คู่มือสำหรับนักพัฒนา (Developer Guide)
 
-```text
-smart-floor-pal/
-├── src/
-│   ├── lib/          # แหล่งเก็บโค้ดฐานข้อมูล mongo.server.ts และ utilities อื่นๆ
-│   ├── routes/       # โค้ดแสดงผลหน้าเว็บเพจ (React) และ HTTP API Routes
-│   └── components/   # ส่วนประกอบย่อยของ UI (เช่น กล่องสวิตช์, กราฟ)
-├── esp32_board/      # สคริปต์ Arduino C++ สำหรับฝังลงในบอร์ดฮาร์ดแวร์จริง
-├── .env              # (ต้องสร้างเอง) ไฟล์เก็บรหัสผ่านความปลอดภัยต่างๆ
-└── package.json      # ไฟล์รวบรวมแพกเกจที่ใช้ในโปรเจกต์
-```
+สำหรับนักพัฒนาที่ต้องการแก้ไขโครงสร้างบ้าน เพิ่มอุปกรณ์ หรือแก้ไขระบบคำนวณค่าไฟ โปรดอ่านรายละเอียดเพิ่มเติมที่:
+👉 [**DEVELOPER_GUIDE.md (คลิกเพื่ออ่าน)**](./DEVELOPER_GUIDE.md)
 
 ---
 
-*พัฒนาและต่อยอดเพื่อสร้างสรรค์ระบบบ้านอัจฉริยะที่รู้ใจคุณ ในทุกย่างก้าว* 🏡
+*พัฒนาด้วย ❤️ เพื่อยกระดับประสบการณ์บ้านอัจฉริยะของคุณ*
